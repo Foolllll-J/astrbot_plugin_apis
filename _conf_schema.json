@@ -1,73 +1,73 @@
 {
-  "debug": {
-    "description": "调试模式",
-    "type": "bool",
-    "default": false,
-    "hint": "如果添加api时报错，试着打开debug找问题, 报错信息将上报消息平台"
-  },
-  "auto_save_data": {
-    "description": "保存API响应数据",
-    "hint": "建议保存，当api失效时可换用本地数据。如果你存储空间紧张则建议不保存",
-    "type": "bool",
-    "default": true
-  },
   "prefix_mode": {
     "description": "前缀模式",
-    "hint": "启用后，需要在触发词前加上前缀或者@bot才能触发api",
+    "hint": "开启后，仅在消息满足前缀或唤醒条件时触发 API。",
     "type": "bool",
     "default": false
+  },
+  "enable_fuzzy_match": {
+    "description": "全局模糊匹配",
+    "hint": "启用时表示关键词“包含匹配”，未启用表示关键词“精准匹配”。若单个 API 配置了此选项，则该 API 配置优先于此全局开关。",
+    "type": "bool",
+    "default": false
+  },
+  "auto_save_data": {
+    "description": "保存 API 响应数据",
+    "hint": "建议开启。接口异常时可使用本地已保存数据进行兜底；若存储空间紧张可关闭。",
+    "type": "bool",
+    "default": true
   },
   "type_switch": {
     "description": "类型开关",
     "type": "object",
     "items": {
       "enable_text": {
-        "description": "是否启用文本api",
+        "description": "启用文本 API",
         "type": "bool",
         "default": true
       },
       "enable_image": {
-        "description": "是否启用图片api",
+        "description": "启用图片 API",
         "type": "bool",
         "default": true
       },
       "enable_video": {
-        "description": "是否启用视频api",
+        "description": "启用视频 API",
         "type": "bool",
         "default": true
       },
       "enable_audio": {
-        "description": "是否启用音频api",
+        "description": "启用音频 API",
         "type": "bool",
         "default": true
       }
     }
   },
   "api_keys": {
-    "description": "api密钥",
-    "hint": "部分api站点需要密钥访问，请在对应网站注册账号拿到密钥后填在此配置项中, 格式为 https://your.api.com:your_api_key (即站点域名:密钥)",
+    "description": "API 密钥",
+    "hint": "部分站点需要密钥访问。格式：https://your.api.com:your_api_key（站点域名:密钥）。",
     "type": "list",
     "default": [
       "http://api.317ak.cn:api_key"
     ]
   },
   "error_reply": {
-    "description": "API异常时回复内容",
-    "hint": "当接口返回错误或异常数据且此项不为空时，将直接回复该内容，而不使用本地兜底；留空则使用本地兜底",
+    "description": "接口异常回复内容",
+    "hint": "当接口返回异常且本项非空时，直接回复该内容；留空则使用本地兜底逻辑。",
     "type": "string",
     "default": ""
   },
   "disable_sites": {
-    "description": "禁用的api站点",
-    "hint": "禁用列表内的api站点会被屏蔽，从而禁止访问",
+    "description": "禁用站点列表",
+    "hint": "可填站点前缀或站点根地址。",
     "type": "list",
     "default": [
       "https://your.api.com"
     ]
   },
   "disable_apis": {
-    "description": "禁用的api",
-    "hint": "禁用列表内的关键词会被屏蔽，从而达到不能触发api的效果",
+    "description": "禁用 API 列表",
+    "hint": "列表项可填写 API 名称或关键词。命中后该 API 不会被本插件处理。",
     "type": "list",
     "default": []
   }

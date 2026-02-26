@@ -1,5 +1,6 @@
 import json
 import random
+import re
 from pathlib import Path
 
 from astrbot.api import logger
@@ -7,7 +8,6 @@ from astrbot.api import logger
 
 class LocalDataManagerError(Exception):
     """本地数据管理器异常"""
-
     pass
 
 
@@ -15,6 +15,28 @@ class LocalDataManager:
     """本地数据管理器（支持文本 / 二进制）"""
 
     _SUB_DIRS = ("text", "image", "video", "audio")
+
+    @staticmethod
+    def _normalize_text_payload(text: str) -> str:
+        """归一化文本：转义换行转真实换行，并清理每行末尾重复中文句号。"""
+        normalized = (
+            text.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\\r", "\n")
+        )
+        lines = normalized.split("\n")
+        cleaned_lines = []
+        for line in lines:
+            stripped = line.rstrip()
+            tail_spaces = line[len(stripped) :]
+            stripped = re.sub(r"。{2,}$", "", stripped)
+            cleaned_lines.append(stripped + tail_spaces)
+        return "\n".join(cleaned_lines)
+
+    @staticmethod
+    def _safe_path_name(path_name: str) -> str:
+        safe = re.sub(r'[\\/:*?"<>|]+', "_", str(path_name)).strip()
+        if safe in ("", ".", ".."):
+            return "unnamed"
+        return safe
 
     def __init__(self, data_root: str | Path) -> None:
         self._root = Path(data_root).expanduser().resolve()
@@ -41,13 +63,14 @@ class LocalDataManager:
         :return: 数据内容或文件路径，如果失败返回None
         """
         saved_text, saved_path = None, None
+        safe_name = self._safe_path_name(path_name)
 
         type_dir = self._type_dirs.get(api_type, self._root / "temp")
         type_dir.mkdir(parents=True, exist_ok=True)
 
         # 文本
         if api_type == "text" and text:
-            json_file = type_dir / f"{path_name}.json"
+            json_file = type_dir / f"{safe_name}.json"
             if not json_file.exists():
                 json_file.write_text("[]", encoding="utf-8")
 
@@ -59,7 +82,7 @@ class LocalDataManager:
             if not isinstance(items, list):
                 items = []
 
-            saved_text = str(text).replace("\\r", "\n")
+            saved_text = self._normalize_text_payload(str(text))
             if saved_text not in items:
                 items.append(saved_text)
             json_file.write_text(
@@ -67,13 +90,13 @@ class LocalDataManager:
             )
         # 图片、视频、音频
         elif byte:
-            save_dir = type_dir / path_name
+            save_dir = type_dir / safe_name
             save_dir.mkdir(parents=True, exist_ok=True)
             ext = {"image": ".jpg", "audio": ".mp3", "video": ".mp4"}.get(
                 api_type, ".bin"
             )
             idx = len(list(save_dir.iterdir()))
-            saved_path = save_dir / f"{path_name}_{idx}_api{ext}"
+            saved_path = save_dir / f"{safe_name}_{idx}_api{ext}"
             saved_path.write_bytes(byte)  # type: ignore[arg-type]
             logger.debug(
                 f"本地保存数据成功 api_type={api_type}, path={saved_path}, size={len(byte)}"
@@ -91,12 +114,13 @@ class LocalDataManager:
         :return: 数据内容或文件路径，如果失败返回None
         """
         text, path = None, None
+        safe_name = self._safe_path_name(path_name)
 
         type_dir = self._type_dirs.get(api_type, self._root / "temp")
 
         # 文本
         if api_type == "text":
-            json_file = type_dir / f"{path_name}.json"
+            json_file = type_dir / f"{safe_name}.json"
             if not json_file.exists():
                 raise LocalDataManagerError(f"文本数据集不存在: {json_file}")
 
@@ -108,12 +132,12 @@ class LocalDataManager:
             if not isinstance(items, list) or not items:
                 raise LocalDataManagerError(f"文本数据集为空或格式错误: {json_file}")
 
-            text = random.choice(items)
+            text = self._normalize_text_payload(str(random.choice(items)))
             return text, None
 
         # 图片、视频、音频
         else:
-            folder = type_dir / path_name
+            folder = type_dir / safe_name
             if not folder.exists():
                 raise LocalDataManagerError(f"目录不存在: {folder}")
 

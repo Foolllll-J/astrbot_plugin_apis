@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 import traceback
 from collections import defaultdict
 
@@ -28,7 +29,21 @@ class RequestManager:
         self.api_key_dict = parse_api_keys(config.get("api_keys", []).copy())
         self.api_sites = list(self.api_key_dict.keys())
         self.api = api_manager
-        self.debug = config.get("debug", False)
+
+    @staticmethod
+    def _normalize_text_payload(text: str) -> str:
+        """归一化文本：转义换行转真实换行，并清理每行末尾重复中文句号。"""
+        normalized = (
+            text.replace("\\r\\n", "\n").replace("\\n", "\n").replace("\\r", "\n")
+        )
+        lines = normalized.split("\n")
+        cleaned_lines = []
+        for line in lines:
+            stripped = line.rstrip()
+            tail_spaces = line[len(stripped) :]
+            stripped = re.sub(r"。{2,}$", "", stripped)
+            cleaned_lines.append(stripped + tail_spaces)
+        return "\n".join(cleaned_lines)
 
     async def request(
         self, urls: list[str], params: dict | None = None, test_mode: bool = False
@@ -47,50 +62,35 @@ class RequestManager:
                     if "ckey" not in request_params:
                         request_params["ckey"] = api_key
 
-                if self.debug:
-                    redacted_params = dict(request_params)
-                    if "ckey" in redacted_params:
-                        redacted_params["ckey"] = "***"
-                    logger.info(
-                        f"准备请求 url={url}, base_url={base_url}, "
-                        f"params_keys={list(request_params.keys())}, "
-                        f"params_preview={redacted_params}"
-                    )
+                logger.debug(f"[API request] url={url} test_mode={test_mode} params={request_params}")
 
                 async with self.session.get(
                     url=url, headers=request_headers, params=request_params or None, timeout=30
                 ) as resp:
                     resp.raise_for_status()
-                    if self.debug:
-                        ct = resp.headers.get("Content-Type", "").lower()
-                        logger.info(
-                            f"请求完成 url={url}, status={resp.status}, content_type={ct}"
-                        )
+                    ct = resp.headers.get("Content-Type", "").lower()
+                    logger.debug(
+                        "[API response] url=%s status=%s content_type=%s",
+                        url,
+                        resp.status,
+                        ct or "unknown",
+                    )
                     if test_mode:
                         return
-                    ct = resp.headers.get("Content-Type", "").lower()
                     if "application/json" in ct:
                         text = await resp.text()
-                        if self.debug:
-                            logger.info(
-                                f"响应内容预览(url={url}, json_raw={text})"
-                            )
                         try:
-                            return json.loads(text)
+                            data = json.loads(text)
                         except Exception:
-                            return text
+                            data = text
+                        logger.debug(f"[API response body] url={url} data={data}")
+                        return data
                     if "text/" in ct:
-                        text = (await resp.text()).strip()
-                        if self.debug:
-                            logger.info(
-                                f"响应内容预览(url={url}, text={text})"
-                            )
-                        return text
+                        data = (await resp.text()).strip()
+                        logger.debug(f"[API response body] url={url} text={data}")
+                        return data
                     content = await resp.read()
-                    if self.debug:
-                        logger.info(
-                            f"响应内容为二进制(url={url}, length={len(content)})"
-                        )
+                    logger.debug(f"[API response body] url={url} bytes_len={len(content)}")
                     return content
             except Exception as e:
                 last_exc = e
@@ -129,6 +129,9 @@ class RequestManager:
             soup = BeautifulSoup(data, "html.parser")
             # 提取HTML中的文本内容
             data = soup.get_text(strip=True)
+
+        if isinstance(data, str):
+            data = self._normalize_text_payload(data)
 
         text = data if isinstance(data, str) else None
         byte = data if isinstance(data, bytes) else None

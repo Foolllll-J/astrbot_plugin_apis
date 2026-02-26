@@ -158,31 +158,11 @@
         "params": {},
         "target": ""
     },
-    "看看女高": {
-        "keyword": [
-            "看看女高"
-        ],
-        "url": [
-            "http://api.xingchenfu.xyz/API/nvgao.php",
-            "https://api.yuafeng.cn/API/ly/cqng.php"
-        ],
-        "type": "video"
-    },
     "看看骚的": {
         "keyword": [
             "看看骚的"
         ],
         "url": "https://api.yuafeng.cn/API/ly/sjxl.php",
-        "type": "video"
-    },
-    "看看玉足": {
-        "keyword": [
-            "看看玉足"
-        ],
-        "url": [
-            "https://api.yuafeng.cn/API/ly/yzxl.php",
-            "http://api.xingchenfu.xyz/API/yzxl.php"
-        ],
         "type": "video"
     },
     "看看漫画": {
@@ -265,145 +245,6 @@
             "text": "https://space.bilibili.com/496733846"
         }
     },
-    "测CP": {
-        "keyword": [
-            "测CP"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/tu_lofter_cp.php",
-        "type": "image",
-        "params": {
-            "n1": "",
-            "n2": "你"
-        }
-    },
-    "看看风景": {
-        "keyword": [
-            "看看风景"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/cgq4kjsdt.php",
-        "type": "image"
-    },
-    "随便来点": {
-        "keyword": [
-            "随便来点"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/tu.php",
-        "type": "image"
-    },
-    "来点龙图": {
-        "keyword": [
-            "来点龙图"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/long.php",
-        "type": "image"
-    },
-    "来点cos": {
-        "keyword": [
-            "来点cos"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/cosplay.php",
-        "type": "image"
-    },
-    "来点二次元": {
-        "keyword": [
-            "来点二次元"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/ecy.php",
-        "type": "image"
-    },
-    "海贼王": {
-        "keyword": [
-            "海贼王"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/haizeiwang.php",
-        "type": "image"
-    },
-    "看看黑丝": {
-        "keyword": [
-            "看看黑丝"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/hssp.php",
-        "type": "video"
-    },
-    "看看白丝": {
-        "keyword": [
-            "看看白丝"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/bsxl.php",
-        "type": "video"
-    },
-    "看看小葫芦": {
-        "keyword": [
-            "看看小葫芦"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/xiaohulu.php",
-        "type": "video"
-    },
-    "看看jk": {
-        "keyword": [
-            "看看jk",
-            "看看JK"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/jk.php",
-        "type": "video"
-    },
-    "看看猫猫": {
-        "keyword": [
-            "看看猫猫"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/sjmm.php",
-        "type": "image"
-    },
-    "脑筋急转弯": {
-        "keyword": [
-            "脑筋急转弯"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/BrainTwister.php",
-        "type": "text"
-    },
-    "随机谜语": {
-        "keyword": [
-            "随机谜语"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/shouji.php",
-        "type": "text"
-    },
-    "随机姓名": {
-        "keyword": [
-            "随机姓名"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/xingming.php",
-        "type": "text"
-    },
-    "三角洲行动门密码": {
-        "keyword": [
-            "三角洲行动门密码",
-            "洲密码"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/delta_mima.php",
-        "type": "text"
-    },
-    "王者出装": {
-        "keyword": [
-            "王者出装"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/wangzhe.php",
-        "type": "text",
-        "params": {
-            "msg": "孙悟空"
-        }
-    },
-    "经纬度": {
-        "keyword": [
-            "经纬度"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/location_geocoder_address.php",
-        "type": "text",
-        "params": {
-            "lng": "125.18512",
-            "lat": "44.43195"
-        }
-    },
     "晚安": {
         "keyword": [
             "晚安"
@@ -418,13 +259,6 @@
         "url": "http://api.317ak.cn/api/tp/fjtp",
         "type": "image"
     },
-    "猫猫": {
-        "keyword": [
-            "猫猫"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/sjmm.php",
-        "type": "image"
-    },
     "原神": {
         "keyword": [
             "原神"
@@ -436,37 +270,7 @@
         "keyword": [
             "坤"
         ],
-        "fuzzy": true,
         "url": "https://free.wqwlkj.cn/wqwlapi/ikun.php",
-        "type": "image"
-    },
-    "猫猫虫": {
-        "keyword": [
-            "猫猫虫",
-            "咖波"
-        ],
-        "url": "http://api.xingchenfu.xyz/API/mmchong.php",
-        "type": "image"
-    },
-    "看看腿": {
-        "keyword": [
-            "看看腿"
-        ],
-        "url": [
-            "https://api.yuafeng.cn/API/ly/meitui.php",
-            "http://api.xingchenfu.xyz/API/tu.php"
-        ],
-        "type": "image",
-        "target": "text"
-    },
-    "来点帅哥": {
-        "keyword": [
-            "来点帅哥"
-        ],
-        "url": [
-            "http://api.xingchenfu.xyz/API/boy.php",
-            "https://api.lolimi.cn/API/boy/api.php"
-        ],
         "type": "image"
     },
     "B站更新": {
@@ -858,16 +662,6 @@
             "看看余震"
         ],
         "url": "http://api.317ak.cn/api/sp/yzxl",
-        "type": "video"
-    },
-    "看看欲梦": {
-        "keyword": [
-            "看看欲梦"
-        ],
-        "url": [
-            "http://api.xingchenfu.xyz/API/ndym.php",
-            "http://api.317ak.cn/api/sp/ndym"
-        ],
         "type": "video"
     },
     "看看萝莉": {
@@ -1351,7 +1145,6 @@
             "鸡叫",
             "小黑子"
         ],
-        "fuzzy": true,
         "url": [
             "https://api.yuafeng.cn/API/ly/kun.php",
             "https://free.wqwlkj.cn/wqwlapi/ikunyy.php"
@@ -1408,5 +1201,51 @@
         "params": {
             "type": "text"
         }
+    },
+    "看看女高": {
+        "keyword": [
+            "看看女高"
+        ],
+        "url": [
+            "https://api.yuafeng.cn/API/ly/cqng.php"
+        ],
+        "type": "video"
+    },
+    "看看玉足": {
+        "keyword": [
+            "看看玉足"
+        ],
+        "url": [
+            "https://api.yuafeng.cn/API/ly/yzxl.php"
+        ],
+        "type": "video"
+    },
+    "看看腿": {
+        "keyword": [
+            "看看腿"
+        ],
+        "url": [
+            "https://api.yuafeng.cn/API/ly/meitui.php"
+        ],
+        "type": "image",
+        "target": "text"
+    },
+    "来点帅哥": {
+        "keyword": [
+            "来点帅哥"
+        ],
+        "url": [
+            "https://api.lolimi.cn/API/boy/api.php"
+        ],
+        "type": "image"
+    },
+    "看看欲梦": {
+        "keyword": [
+            "看看欲梦"
+        ],
+        "url": [
+            "http://api.317ak.cn/api/sp/ndym"
+        ],
+        "type": "video"
     }
 }

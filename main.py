@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 from pathlib import Path
 
@@ -32,13 +32,17 @@ class APIPlugin(Star):
         ]
         # 本地数据存储路径
         self.local_data_dir = StarTools.get_data_dir("astrbot_plugin_apis")
-        # api数据文件
+        # API 数据文件
         self.system_api_file = Path(__file__).parent / "system_api.json"
         self.user_api_file = self.local_data_dir / "user_api.json"
 
     async def initialize(self):
         self.local = LocalDataManager(self.local_data_dir)
-        self.api = APIManager(self.system_api_file, self.user_api_file)
+        self.api = APIManager(
+            self.system_api_file,
+            self.user_api_file,
+            enable_fuzzy_match=self.conf.get("enable_fuzzy_match", False),
+        )
         self.apis_names = self.api.get_apis_names()
         self.web = RequestManager(self.conf, self.api)
 
@@ -46,7 +50,7 @@ class APIPlugin(Star):
     async def data_to_chain(
         api_type: str, text: str | None = "", path: str | Path | None = ""
     ) -> list[BaseMessageComponent]:
-        """根据数据类型构造消息链"""
+        """根据数据类型构造消息链。"""
         chain = []
         if api_type == "text" and text:
             chain = [Plain(text)]
@@ -64,7 +68,7 @@ class APIPlugin(Star):
 
     async def _supplement_args(self, event: AstrMessageEvent, args: list, params: dict):
         """
-        补充参数逻辑
+        补充参数逻辑。
         :param event: 事件对象
         :param args: 当前参数列表（可能为空）
         :param params: 参数字典
@@ -92,7 +96,7 @@ class APIPlugin(Star):
                         if nickname:
                             args.append(nickname)
                             break
-        # 如果仍未获取到参数，尝试使用发送者名称作为额外参数
+        # 如果仍未获取到参数，尝试使用发送者名称补参数
         if not args:
             extra_arg = event.get_sender_name()
             params = {
@@ -101,15 +105,15 @@ class APIPlugin(Star):
 
         return args, params
 
-    @filter.command("api列表")
+    @filter.command("api列表", alias={"API列表"})
     async def api_list(self, event: AstrMessageEvent, api_name: str | None = None):
-        """api详情 <api名称> 不填名称则返回所有api信息"""
+        """指令：api列表 / API列表。返回当前已收录 API 的分类列表。"""
         api_info = self.api.list_api()
         yield event.plain_result(api_info)
 
-    @filter.command("api详情")
+    @filter.command("api详情", alias={"API详情"})
     async def api_detail(self, event: AstrMessageEvent, api_name: str | None = None):
-        """api详情 <api名称> 不填名称则返回所有api信息"""
+        """指令：api详情 / API详情 <api名称>。查看指定 API 的详细配置。"""
         if not api_name:
             yield event.plain_result("未指定api名称")
             return
@@ -117,29 +121,34 @@ class APIPlugin(Star):
         yield event.plain_result(api_detail)
 
     @filter.permission_type(filter.PermissionType.ADMIN)
-    @filter.command("添加api")
+    @filter.command("添加api", alias={"添加API"})
     async def api_add(self, event: AstrMessageEvent):
-        api_detail = event.message_str.removeprefix("添加api").strip()
+        """指令：添加api / 添加API。管理员添加 API，支持 CLI 与旧格式文本。"""
+        parts = event.message_str.split(maxsplit=1)
+        api_detail = parts[1].strip() if len(parts) > 1 else ""
         try:
-            data = self.api.from_detail_str(api_detail)
+            data = self.api.from_add_input(api_detail)
             self.api.add_api(data)
             yield event.plain_result(f"添加api成功:\n{data}")
         except Exception as e:
             logger.error(e)
             yield event.plain_result(
-                "添加api失败, 请检查格式，务必与 api详情 的输出数据格式一致"
+                "添加api失败。支持两种格式：\n"
+                "1) 旧格式：直接粘贴 `api详情` 输出。\n"
+                "2) CLI格式示例：添加api 天气 -t -u https://api.example.com -p city=北京 -g data.msg\n"
+                "类型快捷参数：-v(video) -i(image) -t(text) -a(audio)"
             )
 
     @filter.permission_type(filter.PermissionType.ADMIN)
-    @filter.command("删除api")
+    @filter.command("删除api", alias={"删除API"})
     async def remove_api(self, event: AstrMessageEvent, api_name: str):
-        """删除api"""
+        """指令：删除api / 删除API <api名称>。管理员删除指定 API。"""
         self.api.remove_api(api_name)
         yield event.plain_result(f"已删除api：{api_name}")
 
-    @filter.command("api测试")
+    @filter.command("api测试", alias={"API测试"})
     async def api_status(self, event: AstrMessageEvent):
-        """轮询所有api, 测试api可用性"""
+        """指令：api测试 / API测试。轮询所有 API 并输出可用/失效结果。"""
         yield event.plain_result(f"正在轮询{len(self.api.apis.keys())}个api，请稍等...")
         abled, disabled = await self.web.batch_test_apis()
         msg = (
@@ -149,33 +158,48 @@ class APIPlugin(Star):
 
     @filter.event_message_type(EventMessageType.ALL)
     async def match_api(self, event: AstrMessageEvent):
-        """主函数"""
+        """监听入口：匹配关键词并执行 API 调用链路。"""
 
+        # 流程：前缀判断 -> 匹配 API -> 禁用检查 -> 参数补全 -> 调用接口 -> 发送结果
         # 前缀模式
         if self.conf["prefix_mode"] and not event.is_at_or_wake_command:
             return
 
-        # 匹配api
+        # 匹配 API
         msgs = event.message_str.split(" ")
         api_data = self.api.match_api_by_name(msgs[0])
         if not api_data:
             return
 
-        # 检查api是否被禁用
-        if api_data["name"] in self.conf["disable_apis"]:
-            logger.debug("此API已被禁用")
+        # 检查 API 是否被禁用
+        disabled_apis = {
+            str(item).strip() for item in self.conf.get("disable_apis", []) if str(item).strip()
+        }
+        api_keywords = [
+            str(item).strip() for item in api_data.get("keywords", []) if str(item).strip()
+        ]
+        if api_data["name"] in disabled_apis or any(k in disabled_apis for k in api_keywords):
+            logger.debug("该 API 已被禁用")
             return
 
-        # 检查该站点是否被禁用
+        # 检查站点是否被禁用
+        disable_sites = [
+            str(site).strip() for site in self.conf.get("disable_sites", []) if str(site).strip()
+        ]
+        disable_site_bases = {self.api.extract_base_url(site) for site in disable_sites}
         for url in api_data["urls"]:
-            for site in self.conf["disable_sites"]:
+            url_base = self.api.extract_base_url(url)
+            if url_base in disable_site_bases:
+                logger.debug(f"该站点已被禁用: {url}")
+                return
+            for site in disable_sites:
                 if url.startswith(site):
-                    logger.debug(f"此站点已被禁用：{url}")
+                    logger.debug(f"该站点已被禁用: {url}")
                     return
 
-        # 检查api类型是否被禁用
+        # 检查 API 类型是否被禁用
         if api_data["type"] not in self.enable_api_type:
-            logger.debug("此API类型已被禁用")
+            logger.debug("该 API 类型已被禁用")
             return
 
         # 获取参数
@@ -184,7 +208,7 @@ class APIPlugin(Star):
         # 参数补充
         args, params = await self._supplement_args(event, args, api_data["params"])
 
-        # 生成update_params，保留params中的默认值
+        # 生成 update_params，保留 params 中默认值
         update_params = {
             key: args[i] if i < len(args) else params[key]
             for i, key in enumerate(params.keys())
@@ -194,17 +218,7 @@ class APIPlugin(Star):
             text, path, source = await self.call_api(api_data, update_params)
         except Exception as e:
             logger.error(f"获取数据失败: {e}")
-            if self.conf.get("debug"):
-                await event.send(
-                    event.plain_result(f"获取数据失败 [{api_data['name']}] : {e}")
-                )
             return
-
-        if self.conf.get("debug"):
-            logger.info(
-                f"API调用结果 name={api_data['name']}, type={api_data['type']}, "
-                f"has_text={bool(text)}, has_path={bool(path)}, source={source}"
-            )
 
         final_type = api_data["type"]
         if text and not path:
@@ -223,14 +237,7 @@ class APIPlugin(Star):
     async def call_api_by_name(
         self, name: str, params: dict | None = None
     ) -> tuple[str | None, Path | None, str]:
-        """
-        暴露给外部的API调用函数
-        :param name: API名称
-        :param params: API参数
-        :return: (text, path, source)
-                 source = "api" 表示来自网络
-                 source = "local" 表示来自本地兜底
-        """
+        """Call API by name for external usage."""
         api_data = self.api.match_api_by_name(name)
         logger.debug(api_data)
         if not api_data:
@@ -241,12 +248,7 @@ class APIPlugin(Star):
     async def call_api(
         self, api_data: dict, params: dict | None = None
     ) -> tuple[str | None, Path | None, str]:
-        """
-        调用API并返回数据
-        :return: (text, path, source)
-                 source = "api" 表示来自网络
-                 source = "local" 表示来自本地兜底
-        """
+        """Call API and return (text, path, source)."""
         try:
             # === 外部接口调用 ===
             api_text, api_byte = await self.web.get_data(
@@ -255,13 +257,6 @@ class APIPlugin(Star):
                 api_type=api_data["type"],
                 target=api_data["target"],
             )
-
-            if self.conf.get("debug"):
-                byte_len = len(api_byte) if isinstance(api_byte, (bytes, bytearray)) else 0
-                logger.info(
-                    f"API原始返回 name={api_data['name']}, type={api_data['type']}, "
-                    f"text_type={type(api_text).__name__}, byte_len={byte_len}"
-                )
 
             is_abnormal = False
             if api_byte is None and api_text is None:
@@ -286,7 +281,7 @@ class APIPlugin(Star):
             if is_abnormal:
                 if error_reply:
                     return error_reply, None, "error"
-                raise RuntimeError(f"API异常返回 [{api_data['name']}]")
+                raise RuntimeError(f"API 返回异常 [{api_data['name']}]")
 
             if api_text or api_byte:
                 saved_text, saved_path = await self.local.save_data(
@@ -301,10 +296,10 @@ class APIPlugin(Star):
             error_reply = (self.conf.get("error_reply") or "").strip()
             if error_reply:
                 logger.warning(
-                    f"API调用失败 [{api_data['name']}]，使用error_reply: {e}"
+                    f"API 调用失败 [{api_data['name']}]，使用 error_reply: {e}"
                 )
                 return error_reply, None, "error"
-            logger.warning(f"API调用失败 [{api_data['name']}]，尝试本地兜底: {e}")
+            logger.warning(f"API 调用失败 [{api_data['name']}]，尝试本地兜底: {e}")
 
         # === 本地兜底 ===
         try:
@@ -317,6 +312,6 @@ class APIPlugin(Star):
             return None, None, "error"
 
     async def terminate(self):
-        """关闭会话，断开连接"""
+        """Close plugin network session."""
         await self.web.terminate()
-        logger.info("已关闭astrbot_plugin_image_apis的网络连接")
+        logger.info("已关闭 astrbot_plugin_apis 的网络连接")
