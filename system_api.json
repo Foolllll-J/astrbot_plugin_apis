@@ -259,13 +259,6 @@
         "url": "http://api.317ak.cn/api/tp/fjtp",
         "type": "image"
     },
-    "原神": {
-        "keyword": [
-            "原神"
-        ],
-        "url": "https://api.xingzhige.com/API/yshl/",
-        "type": "image"
-    },
     "坤": {
         "keyword": [
             "坤"
